@@ -2,13 +2,15 @@
   <img src=".github/assets/banner.svg" alt="Music adb：用鼠标和键盘控制手机音乐播放" width="100%">
 </p>
 
-# Music adb
+<h1 align="center">Music adb</h1>
 
-用鼠标侧键和滑杆直接控制手机上的音乐播放 —— 电脑连着手机，adb 负责执行，你不用再拿起手机。
+<p align="center">用鼠标侧键和滑杆直接控制手机上的音乐播放 —— 电脑连着手机，adb 负责执行，你不用再拿起手机。</p>
 
-[![Release](https://img.shields.io/github/v/release/GUY-ATM/Music-adb?label=release)](https://github.com/GUY-ATM/Music-adb/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/GUY-ATM/Music-adb/total)](https://github.com/GUY-ATM/Music-adb/releases)
-[![License](https://img.shields.io/github/license/GUY-ATM/Music-adb)](LICENSE)
+<p align="center">
+  <a href="https://github.com/GUY-ATM/Music-adb/releases/latest"><img src="https://img.shields.io/github/v/release/GUY-ATM/Music-adb?label=release" alt="最新版本"></a>
+  <a href="https://github.com/GUY-ATM/Music-adb/releases"><img src="https://img.shields.io/github/downloads/GUY-ATM/Music-adb/total" alt="下载次数"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/GUY-ATM/Music-adb" alt="开源协议"></a>
+</p>
 
 手机连着电脑的时候，切歌得先摸到手机、调音量还得看音量条 —— 这个工具把这套动作搬到鼠标上：侧键切上一曲 / 下一曲，滑杆或滚轮调音量，全部通过 adb 静默下发。它是一个 Windows 桌面小工具，不做音乐播放，也不接管手机的通知与蓝牙。
 
