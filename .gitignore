@@ -1,0 +1,12 @@
+# 构建产物
+build/
+dist/
+
+# 运行时配置（含本机 adb 路径、设备地址与按键绑定）
+config.json
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
