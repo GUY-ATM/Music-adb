@@ -77,6 +77,10 @@ class VolumeTest(unittest.TestCase):
     def fake_run_adb(self, args, timeout=8):
         if "--get" in args:
             return True, f"[V] volume is {self.state['v']} in range [0..{self.state['max']}]"
+        if "set-volume" in args:
+            v = max(0, min(self.state["max"], int(args[-1])))
+            self.state["v"] = v
+            return True, "ok"
         for part in args[-1].split(";"):
             op = part.split()[-1]
             if op == "RAISE":
@@ -104,6 +108,22 @@ class VolumeTest(unittest.TestCase):
         self.assertEqual(self.state["v"], 150)
         adb.set_volume_absolute(-20)
         self.assertEqual(self.state["v"], 0)
+
+    def test_exact_index_set(self):
+        """set-volume 通道可精确到单个档位，不再跳 10。"""
+        adb.run_adb = self.fake_run_adb
+        self.state["v"] = 75
+        ok, msg = adb.set_volume_absolute(76)
+        self.assertTrue(ok, msg)
+        self.assertEqual(self.state["v"], 76)
+
+    def test_percent_roundtrip(self):
+        self.assertEqual(adb.volume_percent(75, 150), 50)
+        self.assertEqual(adb.volume_percent(73, 150), 49)
+        self.assertEqual(adb.volume_index(50, 150), 75)
+        self.assertEqual(adb.volume_index(33, 150), 50)
+        self.assertEqual(adb.volume_percent(0, 0), 0)
+        self.assertEqual(adb.volume_index(50, 0), 0)
 
 
 class ChannelTest(unittest.TestCase):

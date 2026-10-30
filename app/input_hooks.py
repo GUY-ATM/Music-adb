@@ -22,7 +22,7 @@ WM_XBUTTONDOWN = 0x020B
 WM_NCXBUTTONDOWN = 0x00AB  # 非客户区侧键按下（AutoHotkey 同时处理此消息）
 WM_MOUSEWHEEL = 0x020A
 WHEEL_DELTA = 120  # 滚轮一格的增量
-TRAY_WHEEL_STEP = 5  # 托盘滚轮一格的音量步长（与音量页滑杆一致）
+TRAY_WHEEL_STEP = 1  # 托盘滚轮一格 = 1%（与音量页滑杆一致）
 XBUTTON1 = 1  # 后退键
 XBUTTON2 = 2  # 前进键
 

@@ -14,6 +14,7 @@ from PyQt5.QtCore import QObject
 from PyQt5.QtGui import QGuiApplication, QIcon
 from PyQt5.QtWidgets import QMenu, QSystemTrayIcon
 
+from .adb import volume_percent
 from .config import resource_path
 
 user32 = ctypes.windll.user32
@@ -62,6 +63,8 @@ class TrayIcon(QObject):
         self.window = window
         self.ctl = ctl
         self.hidden_in_overflow = False  # 图标是否被折叠在「^」浮层里
+        self._connected = False
+        self._pct = None
 
         self.tray = QSystemTrayIcon(self._load_icon(), self)
         self.tray.setToolTip("手机音乐控制 · 未连接")
@@ -73,8 +76,8 @@ class TrayIcon(QObject):
     # 初始化
     # ------------------------------------------------------------------
     def _load_icon(self):
-        # 托盘图标用彩色版本：music.png 是黑底，在深色任务栏上几乎看不见
-        for name in ("tray.ico", "tray.png", "music.png"):
+        # 与窗口 / EXE 使用同一个图标：黑色圆角方块 + 纯白音符
+        for name in ("music.ico", "music.png"):
             path = resource_path(name)
             if os.path.exists(path):
                 return QIcon(path)
@@ -111,12 +114,21 @@ class TrayIcon(QObject):
     # 状态同步
     # ------------------------------------------------------------------
     def set_connected(self, ok):
-        self.tray.setToolTip("手机音乐控制 · 已连接\n鼠标移到图标上滚动滚轮调节音量"
-                             if ok else "手机音乐控制 · 未连接")
+        self._connected = ok
+        self._refresh_tip()
 
     def set_volume(self, cur, mx):
-        self.tray.setToolTip(f"手机音乐控制 · 音量 {cur}/{mx}\n"
-                             "鼠标移到图标上滚动滚轮调节音量")
+        self._pct = volume_percent(cur, mx)
+        self._refresh_tip()
+
+    def _refresh_tip(self):
+        """提示只保留一句：已连接时显示手机媒体音量百分比。"""
+        if not self._connected:
+            self.tray.setToolTip("手机音乐控制 · 未连接")
+        elif self._pct is None:
+            self.tray.setToolTip("手机媒体音量：--%")
+        else:
+            self.tray.setToolTip(f"手机媒体音量：{self._pct}%")
 
     def set_muted(self, muted):
         self.muteAction.setText("取消静音" if muted else "静音")

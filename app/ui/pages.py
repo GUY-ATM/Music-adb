@@ -10,6 +10,7 @@ from qfluentwidgets import (BodyLabel, CaptionLabel, FluentIcon, LineEdit,
                             SettingCard, SettingCardGroup, SwitchSettingCard,
                             TextEdit, TitleLabel)
 
+from ..adb import volume_index, volume_percent
 from ..config import BINDING_GUIDE, binding_display
 from .widgets import Dot, OptionCard, SectionCard, WheelSlider, hint
 
@@ -231,9 +232,10 @@ class VolumePage(BasePage):
         numRow.addStretch(1)
         card.vBoxLayout.addLayout(numRow)
 
-        self.slider = WheelSlider(Qt.Horizontal, 5, card)
-        self.slider.setRange(0, 150)
+        self.slider = WheelSlider(Qt.Horizontal, 1, card)
+        self.slider.setRange(0, 100)
         self.slider.setValue(0)
+        self._mx = 0  # 手机音量范围的档位上限，用于百分比与档位换算
         self.slider.setMinimumHeight(36)
         self.slider.valueChanged.connect(self.on_slide)
         self.slider.wheelStepped.connect(self.on_wheel)
@@ -251,18 +253,18 @@ class VolumePage(BasePage):
         card.vBoxLayout.addLayout(btnRow)
 
         card.vBoxLayout.addWidget(hint(
-            "拖动滑杆，或把鼠标放在滑杆上滚动滚轮，按 5 一档调节；调节为静默下发，手机不会弹音量条。"
+            "拖动滑杆，或把鼠标放在滑杆上滚动滚轮，按 1% 一档调节；调节为静默下发，手机不会弹音量条。"
             "程序运行时，也可以把鼠标移到任务栏通知区域的托盘图标上滚动滚轮调节音量"
             "（图标被收进「^」浮层时，先把它从浮层拖到任务栏上固定）。", card))
         self.vBoxLayout.addWidget(card)
         self.vBoxLayout.addStretch(1)
 
-    # --- 滑杆逻辑 ---
+    # --- 滑杆逻辑（滑杆值为百分比，0~100）---
     def on_slide(self, value):
         if self._syncing:
             return
         self._pending = int(value)
-        self.valueLabel.setText(str(self._pending))
+        self.valueLabel.setText(f"{self._pending}%")
         if not self._timer.isActive():
             self._timer.start()
 
@@ -270,24 +272,25 @@ class VolumePage(BasePage):
         if self._syncing or not self.ctl.is_connected():
             return
         cur = int(self.slider.value())
-        mx = int(self.slider.maximum())
-        self.slider.setValue(max(0, min(mx, cur + step)))
+        self.slider.setValue(max(0, min(100, cur + step)))
 
     def _flush(self):
-        if self._pending is None or not self.ctl.is_connected():
+        if self._pending is None or not self.ctl.is_connected() or self._mx <= 0:
             return
         target, self._pending = self._pending, None
-        self.ctl.set_volume(target)
+        self.ctl.set_volume(volume_index(target, self._mx))
 
     def sync(self, cur, mx):
+        self._mx = int(mx)
+        pct = volume_percent(cur, mx)
         self._syncing = True
         try:
-            self.slider.setRange(0, mx)
-            self.slider.setValue(cur)
+            self.slider.setRange(0, 100)
+            self.slider.setValue(pct)
         finally:
             self._syncing = False
-        self.valueLabel.setText(str(cur))
-        self.maxLabel.setText(f"/ {mx}")
+        self.valueLabel.setText(f"{pct}%")
+        self.maxLabel.setText(f"档位 {cur}/{mx}")
 
     def set_available(self, ok):
         for w in (self.slider, self.muteBtn, self.syncBtn):

@@ -97,12 +97,18 @@ def read_volume():
     return (int(m.group(1)), int(m.group(3))), out
 
 
-def set_volume_absolute(target):
-    """把音乐流音量设为 target（0~max），返回 (是否成功, 输出)。
+def volume_percent(cur, mx):
+    """原始档位换算成百分比（0~100）。"""
+    return 0 if mx <= 0 else int(round(cur * 100.0 / mx))
 
-    `cmd audio adj-volume` 每次调节一档（通常 10），按差值分多档下发后回读校验，
-    最多微调 4 轮，避免档位差异导致偏差。
-    """
+
+def volume_index(pct, mx):
+    """百分比换算成原始档位（0~mx）。"""
+    return 0 if mx <= 0 else int(round(pct * mx / 100.0))
+
+
+def _adj_volume_to(target):
+    """用 adj-volume 逐档逼近 target：老系统没有 set-volume 子命令时使用。"""
     detail = ""
     for _ in range(4):
         v, out = read_volume()
@@ -123,6 +129,28 @@ def set_volume_absolute(target):
     if v is None:
         return False, out
     return True, f"音量 {v[0]}/{v[1]}"
+
+
+def set_volume_absolute(target):
+    """把音乐流音量精确设为 target（0~max），返回 (是否成功, 输出)。
+
+    `cmd audio set-volume` 直接写入档位、不弹系统音量条，可以精确到 1 个档位
+    （150 档的音量范围即约 0.67% 一档）。个别老系统没有该子命令，退回
+    adj-volume 逐档逼近（那时的档位通常一次跳 10）。
+    """
+    v, out = read_volume()
+    if v is not None:
+        cur, mx = v
+        target = max(0, min(int(target), mx))
+        if target == cur:
+            return True, f"音量 {cur}/{mx}"
+        ok, _ = run_adb(device_args() + ["shell", "cmd", "audio", "set-volume",
+                                         VOLUME_STREAM, str(target)])
+        if ok:
+            v2, _ = read_volume()
+            if v2 is not None and v2[0] == target:
+                return True, f"音量 {v2[0]}/{v2[1]}"
+    return _adj_volume_to(target)
 
 
 def list_devices():
