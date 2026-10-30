@@ -10,7 +10,7 @@ import ctypes
 import threading
 import time
 
-from .bus import capture_q, cmd_q, CONNECTED
+from .bus import capture_q, cmd_q, CONNECTED, tray_q
 from .config import (MOD_ALT, MOD_CTRL, MOD_SHIFT, MODIFIER_VKS, VALID_BUTTONS,
                      cfg, make_key_binding, parse_key_binding)
 
@@ -20,6 +20,9 @@ WM_RBUTTONDOWN = 0x0204
 WM_MBUTTONDOWN = 0x0207
 WM_XBUTTONDOWN = 0x020B
 WM_NCXBUTTONDOWN = 0x00AB  # 非客户区侧键按下（AutoHotkey 同时处理此消息）
+WM_MOUSEWHEEL = 0x020A
+WHEEL_DELTA = 120  # 滚轮一格的增量
+TRAY_WHEEL_STEP = 5  # 托盘滚轮一格的音量步长（与音量页滑杆一致）
 XBUTTON1 = 1  # 后退键
 XBUTTON2 = 2  # 前进键
 
@@ -121,6 +124,39 @@ _kb_bound_last = {}
 # 捕获状态：非 None 表示正在等待用户按下某个鼠标或键盘按键（值为 "prev" 或 "next"）
 capture_action = {"which": None}
 
+# 托盘图标在屏幕上的矩形 (x, y, 宽, 高)，物理像素；由 UI 线程定期刷新，None 表示不可见
+TRAY_RECT = {"rect": None}
+# 滚轮累计量：触摸板等设备单次增量可能不足一格，累计到整格再调节
+_tray_accum = [0]
+
+
+def set_tray_rect(rect):
+    """UI 线程调用：登记托盘图标位置，供钩子判断鼠标是否停在图标上。"""
+    TRAY_RECT["rect"] = rect
+
+
+def in_tray(pt):
+    """判断鼠标坐标是否落在托盘图标范围内（含 2px 容差，吸收取整误差）。"""
+    r = TRAY_RECT["rect"]
+    if not r:
+        return False
+    x, y, w, h = r
+    pad = 2
+    return x - pad <= pt.x < x + w + pad and y - pad <= pt.y < y + h + pad
+
+
+def wheel_steps(accum, delta):
+    """把滚轮增量累计成整档步数，返回 (步数, 剩余增量)。"""
+    accum += delta
+    steps = 0
+    while accum >= WHEEL_DELTA:
+        accum -= WHEEL_DELTA
+        steps += 1
+    while accum <= -WHEEL_DELTA:
+        accum += WHEEL_DELTA
+        steps -= 1
+    return steps, accum
+
 
 def _current_mods():
     """读取当前按下的修饰键，返回 MOD_CTRL / MOD_ALT / MOD_SHIFT 位组合。"""
@@ -156,9 +192,28 @@ def _resolve_button(wParam, lParam):
     return BUTTON_FROM_WPARAM.get(wParam)
 
 
+def _handle_tray_wheel(nCode, wParam, lParam):
+    """鼠标停在托盘图标上滚动滚轮时调节音量；其它情况一律放行。
+
+    Windows 的通知区域不会把滚轮消息发给图标所属窗口（Qt 也只在 X11 上提供
+    QSystemTrayIcon 的 wheel 事件），因此这里用低级鼠标钩子拿到全局滚轮，
+    再与托盘图标矩形做命中测试。
+    """
+    info = ctypes.cast(lParam, ctypes.POINTER(MSLLHOOKSTRUCT)).contents
+    if capture_action["which"] or not CONNECTED["ok"] or not in_tray(info.pt):
+        return user32.CallNextHookEx(_hook_handle, nCode, wParam, lParam)
+    delta = ctypes.c_short(info.mouseData >> 16).value  # 高字是带符号的滚轮增量
+    steps, _tray_accum[0] = wheel_steps(_tray_accum[0], delta)
+    if steps:
+        tray_q.put(steps * TRAY_WHEEL_STEP)
+    return 1  # 拦截，避免滚轮继续传给任务栏或其它程序
+
+
 def _hook_callback(nCode, wParam, lParam):
     try:
         if nCode == 0:  # HC_ACTION
+            if wParam == WM_MOUSEWHEEL:
+                return _handle_tray_wheel(nCode, wParam, lParam)
             btn = _resolve_button(wParam, lParam)
             if btn:
                 # 捕获模式：只捕获可绑定按键；左键用于界面操作，一律放行

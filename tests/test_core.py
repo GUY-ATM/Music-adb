@@ -200,5 +200,51 @@ class MouseMessageTest(unittest.TestCase):
         self.assertIsNone(input_hooks._resolve_button(0x0200, 0))  # WM_MOUSEMOVE
 
 
+class TrayWheelTest(unittest.TestCase):
+    """托盘图标滚轮调音量：增量累计与命中测试。"""
+
+    def test_wheel_steps_single_notch(self):
+        self.assertEqual(input_hooks.wheel_steps(0, 120), (1, 0))
+        self.assertEqual(input_hooks.wheel_steps(0, -120), (-1, 0))
+        # 两格一次事件（部分鼠标加速后会出现 240）
+        self.assertEqual(input_hooks.wheel_steps(0, 240), (2, 0))
+
+    def test_wheel_steps_accumulates_small_deltas(self):
+        accum, steps = 0, 0
+        for _ in range(8):  # 触摸板常见的小增量 15
+            s, accum = input_hooks.wheel_steps(accum, 15)
+            steps += s
+        self.assertEqual(steps, 1)
+        self.assertEqual(accum, 0)
+
+    def test_wheel_steps_mixed_direction(self):
+        steps, accum = input_hooks.wheel_steps(60, -100)
+        self.assertEqual((steps, accum), (0, -40))
+        steps, accum = input_hooks.wheel_steps(accum, 160)
+        self.assertEqual((steps, accum), (1, 0))
+
+    def test_hit_test(self):
+        pt = input_hooks.POINT()
+        old = input_hooks.TRAY_RECT["rect"]
+        try:
+            input_hooks.TRAY_RECT["rect"] = None
+            pt.x, pt.y = 10, 10
+            self.assertFalse(input_hooks.in_tray(pt))
+
+            input_hooks.TRAY_RECT["rect"] = (1534, 1140, 40, 60)
+            pt.x, pt.y = 1550, 1170
+            self.assertTrue(input_hooks.in_tray(pt))
+            pt.x, pt.y = 1533, 1170  # 2px 容差内
+            self.assertTrue(input_hooks.in_tray(pt))
+            pt.x, pt.y = 1500, 1170
+            self.assertFalse(input_hooks.in_tray(pt))
+            pt.x, pt.y = 1550, 1100
+            self.assertFalse(input_hooks.in_tray(pt))
+            pt.x, pt.y = 1578, 1205  # 右下边界外（含 2px 容差）
+            self.assertFalse(input_hooks.in_tray(pt))
+        finally:
+            input_hooks.TRAY_RECT["rect"] = old
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

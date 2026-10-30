@@ -11,9 +11,10 @@ from qfluentwidgets import (FluentIcon, FluentWindow, InfoBar, InfoBarPosition,
                             NavigationItemPosition, Theme, isDarkTheme, setTheme)
 
 from .. import input_hooks
-from ..bus import CONNECTED, capture_q, cmd_q, result_q
+from ..bus import CONNECTED, capture_q, cmd_q, result_q, tray_q
 from ..config import (binding_display, cfg, is_valid_binding, resource_path,
                       save_config)
+from ..tray import TrayIcon
 from .pages import DevicePage, LogPage, PlaybackPage, SettingsPage, VolumePage
 
 
@@ -56,6 +57,11 @@ class MainWindow(FluentWindow):
         if self.cfg.get("topmost", True):
             self.setWindowFlag(Qt.WindowStaysOnTopHint, True)
         self._apply_theme(self.cfg.get("theme", "auto"))
+
+        self.tray = TrayIcon(self, self)
+        self._tray_hidden = False
+        self.log("托盘图标：%s" % ("已在通知区域显示，鼠标悬停可滚轮调音量"
+                                if TrayIcon.is_available() else "系统通知区域不可用"))
 
         self.set_connected(False, "未连接")
         self.log(f"程序已启动，输入钩子：鼠标={'正常' if input_hooks.mouse_hook_ok else '失败'}，"
@@ -114,6 +120,7 @@ class MainWindow(FluentWindow):
             return
         self.muted = not self.muted
         self.volumePage.muteBtn.setText("取消静音" if self.muted else "静音")
+        self.tray.set_muted(self.muted)
         cmd_q.put(("keyevent", "164" if self.muted else "163",
                    "静音" if self.muted else "取消静音"))
 
@@ -203,6 +210,7 @@ class MainWindow(FluentWindow):
         self.devicePage.disconnectBtn.setEnabled(ok and not busy)
         self.playbackPage.set_available(ok and not busy)
         self.volumePage.set_available(ok and not busy)
+        self.tray.set_connected(ok and not busy)
 
     def on_connect_ok(self, ok, msg):
         if ok:
@@ -229,6 +237,19 @@ class MainWindow(FluentWindow):
             except Exception:
                 break
             self.finish_capture(which, btn)
+        while True:
+            try:
+                step = tray_q.get_nowait()
+            except Exception:
+                break
+            self.volumePage.on_wheel(step)
+        # 托盘图标可能随任务栏位置变化，定期刷新给钩子用的命中矩形
+        input_hooks.set_tray_rect(self.tray.geometry_physical())
+        if self.tray.hidden_in_overflow != self._tray_hidden:
+            self._tray_hidden = self.tray.hidden_in_overflow
+            if self._tray_hidden:
+                self.log("托盘图标目前折叠在任务栏的「^」浮层里：把它从浮层拖到任务栏上固定，"
+                         "之后就能把鼠标移到图标上滚动滚轮调节音量。")
 
     def handle_result(self, label, ok, msg):
         if label == "检测设备":
@@ -248,6 +269,7 @@ class MainWindow(FluentWindow):
                 try:
                     cur, mx = (int(x) for x in msg.split(","))
                     self.volumePage.sync(cur, mx)
+                    self.tray.set_volume(cur, mx)
                     self.log(f"已读取音量：{cur}/{mx}")
                 except Exception:
                     self.log(f"音量解析失败：{msg}")
@@ -261,6 +283,7 @@ class MainWindow(FluentWindow):
                 try:
                     cur, mx = (int(x) for x in msg.replace("音量", "").strip().split("/"))
                     self.volumePage.sync(cur, mx)
+                    self.tray.set_volume(cur, mx)
                 except Exception:
                     pass
             else:
@@ -307,6 +330,8 @@ class MainWindow(FluentWindow):
     def closeEvent(self, e):
         self.timer.stop()
         input_hooks.capture_action["which"] = None
+        input_hooks.set_tray_rect(None)
+        self.tray.hide()
         input_hooks.stop_hook()
         cmd_q.put(None)
         save_config()

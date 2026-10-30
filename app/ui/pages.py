@@ -251,7 +251,9 @@ class VolumePage(BasePage):
         card.vBoxLayout.addLayout(btnRow)
 
         card.vBoxLayout.addWidget(hint(
-            "拖动滑杆，或把鼠标放在滑杆上滚动滚轮，按 5 一档调节；调节为静默下发，手机不会弹音量条。", card))
+            "拖动滑杆，或把鼠标放在滑杆上滚动滚轮，按 5 一档调节；调节为静默下发，手机不会弹音量条。"
+            "程序运行时，也可以把鼠标移到任务栏通知区域的托盘图标上滚动滚轮调节音量"
+            "（图标被收进「^」浮层时，先把它从浮层拖到任务栏上固定）。", card))
         self.vBoxLayout.addWidget(card)
         self.vBoxLayout.addStretch(1)
 

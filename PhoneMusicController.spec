@@ -6,8 +6,8 @@ binaries = []
 hiddenimports = []
 tmp_ret = collect_all('qfluentwidgets')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-# 窗口图标使用项目内的 music.png（EXE 图标见下方 icon）
-datas += [('music.png', '.')]
+# 窗口图标使用项目内的 music.png（EXE 图标见下方 icon）；托盘图标用 tray.ico
+datas += [('music.png', '.'), ('tray.ico', '.'), ('tray.png', '.')]
 
 
 a = Analysis(
