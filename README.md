@@ -2,19 +2,33 @@
   <img src=".github/assets/banner.svg" alt="Music adb：用鼠标和键盘控制手机音乐播放" width="100%">
 </p>
 
-<h1 align="center">Music adb</h1>
-
-<p align="center">用鼠标侧键和滑杆直接控制手机上的音乐播放 —— 电脑连着手机，adb 负责执行，你不用再拿起手机。</p>
+<h1 align="center">🎵 Music adb</h1>
 
 <p align="center">
-  <a href="https://github.com/GUY-ATM/Music-adb/releases/latest"><img src="https://img.shields.io/github/v/release/GUY-ATM/Music-adb?label=release" alt="最新版本"></a>
-  <a href="https://github.com/GUY-ATM/Music-adb/releases"><img src="https://img.shields.io/github/downloads/GUY-ATM/Music-adb/total" alt="下载次数"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/GUY-ATM/Music-adb" alt="开源协议"></a>
+  🎧 用鼠标侧键、滚轮和滑杆直接控制手机上的音乐播放<br>
+  电脑连着手机，adb 负责执行，你不用再拿起手机。
 </p>
 
-手机连着电脑的时候，切歌得先摸到手机、调音量还得看音量条 —— 这个工具把这套动作搬到鼠标上：侧键切上一曲 / 下一曲，滑杆或滚轮调音量，全部通过 adb 静默下发。它是一个 Windows 桌面小工具，不做音乐播放，也不接管手机的通知与蓝牙。
+<p align="center">
+  <a href="https://github.com/GUY-ATM/Music-adb/releases/latest"><img src="https://img.shields.io/github/v/release/GUY-ATM/Music-adb?style=for-the-badge&label=RELEASE&color=7c5cff" alt="最新版本"></a>
+  <a href="https://github.com/GUY-ATM/Music-adb/releases"><img src="https://img.shields.io/github/downloads/GUY-ATM/Music-adb/total?style=for-the-badge&color=4c7dff" alt="下载次数"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/GUY-ATM/Music-adb?style=for-the-badge&color=2ecc71" alt="开源协议"></a>
+  <img src="https://img.shields.io/badge/platform-Windows-0078d4?style=for-the-badge&logo=windows" alt="Windows">
+  <img src="https://img.shields.io/badge/python-3.9%2B-3776ab?style=for-the-badge&logo=python" alt="Python 3.9+">
+  <img src="https://img.shields.io/badge/adb-Android-3ddc84?style=for-the-badge&logo=android" alt="adb">
+</p>
 
-## 界面
+<p align="center">📱 手机连着电脑的时候，切歌得先摸到手机、调音量还得看音量条 —— 这个工具把这套动作搬到鼠标上：侧键切上一曲 / 下一曲，滚轮或滑杆调音量，全部通过 adb 静默下发。<br>它是一个 Windows 桌面小工具，不做音乐播放，也不接管手机的通知与蓝牙。</p>
+
+## ✨ 三个改变
+
+| | 以前 | 现在 |
+| :---: | --- | --- |
+| ⏭️ 切歌 | 伸手拿起手机 → 解锁 → 切歌 | 轻点鼠标侧键，手机直接切歌 |
+| 🔊 调音量 | 找到音量键 → 盯着音量条 | 鼠标滑杆或滚轮，按 1% 精确调节 |
+| 🖱️ 不打断工作 | 切到播放器窗口 | 鼠标停在任务栏图标上滚轮即可调节 |
+
+## 📸 界面
 
 播放控制页（已连接状态）：
 
@@ -25,7 +39,7 @@
 <table>
   <tr>
     <td width="50%"><img src="run_photo/01-connect.png" alt="连接设备页：设备地址输入、连接/检测/断开，以及使用步骤"></td>
-    <td width="50%"><img src="run_photo/03-volume.png" alt="音量页：大号音量数字 90/150、可拖动与滚轮调节的滑杆、静音与同步按钮"></td>
+    <td width="50%"><img src="run_photo/03-volume.png" alt="音量页：百分比音量、可拖动与滚轮调节的滑杆、静音与同步按钮"></td>
   </tr>
   <tr>
     <td width="50%"><img src="run_photo/05-settings.png" alt="设置页：界面主题、窗口置顶、按键拦截开关与 adb 路径"></td>
@@ -33,35 +47,54 @@
   </tr>
 </table>
 
-## 功能
+## 🚀 功能
 
-- **切歌与播放控制** — 上一曲、下一曲、播放 / 暂停、停止，通过 `cmd media_session dispatch` 下发，不依赖手机前台应用。
-- **任意按键绑定** — 点「设置上一曲 / 设置下一曲」，按一下目标按键即可：鼠标侧键、中键、右键，或任意键盘按键（可带 `Ctrl` / `Alt` / `Shift` 组合）。`Esc` 或「取消」退出录制。
-- **系统媒体键通道** — 鼠标驱动把侧键映射为「上一曲 / 下一曲」时，程序直接接收系统媒体键，无需绑定；该通道与录制的按键可同时生效。
-- **音量滑杆 + 滚轮** — 以百分比显示与调节：拖动滑杆或滚动滚轮按 1% 一档精确下发，连续滚轮只下发最终值；调节为静默下发，手机不会弹音量条；支持静音 / 取消静音。
-- **托盘图标滚轮调音量** — 程序常驻任务栏通知区域，鼠标移到图标上滚动滚轮即可按 1% 调节，悬停提示显示「手机媒体音量：xx%」；右键菜单可调出主界面、重读音量、静音或退出。
-- **USB 与 WiFi 连接** — 数据线直连，或 `adb tcpip 5555` 后填 `手机IP:5555`；自动检测设备，支持手动指定 `adb.exe` 路径。
-- **未连接即冻结** — 没有连接设备时，播放、音量、绑定按钮与全局按键全部失效，不会误触发。
-- **可复制的运行日志** — 连接、同步、绑定与 adb 报错都进日志页，一键复制排查。
-- **Fluent 界面** — 深色 / 浅色 / 跟随系统主题可记忆，标题栏按钮随主题自适应。
+- ⏯️ **切歌与播放控制** — 上一曲、下一曲、播放 / 暂停、停止，通过 `cmd media_session dispatch` 下发，不依赖手机前台应用。
+- ⌨️ **任意按键绑定** — 点「设置上一曲 / 设置下一曲」，按一下目标按键即可：鼠标侧键、中键、右键，或任意键盘按键（可带 `Ctrl` / `Alt` / `Shift` 组合）。`Esc` 或「取消」退出录制。
+- 🎵 **系统媒体键通道** — 鼠标驱动把侧键映射为「上一曲 / 下一曲」时，程序直接接收系统媒体键，无需绑定；该通道与录制的按键可同时生效。
+- 🔊 **百分比音量 + 滚轮** — 拖动滑杆或滚动滚轮按 **1%** 一档精确下发，连续滚轮只发最终值；静默调节，手机不会弹音量条；支持静音 / 取消静音。
+- 🖱️ **托盘图标滚轮调音量** — 程序常驻任务栏通知区域，鼠标移到图标上滚动滚轮即可按 1% 调节，悬停提示显示「手机媒体音量：xx%」；右键菜单可调出主界面、重读音量、静音或退出。
+- 🔌 **USB 与 WiFi 连接** — 数据线直连，或 `adb tcpip 5555` 后填 `手机IP:5555`；自动检测设备，支持手动指定 `adb.exe` 路径。
+- 🔒 **未连接即冻结** — 没有连接设备时，播放、音量、绑定按钮与全局按键全部失效，不会误触发。
+- 📋 **可复制的运行日志** — 连接、同步、绑定与 adb 报错都进日志页，一键复制排查。
+- 🎨 **Fluent 界面** — 深色 / 浅色 / 跟随系统主题可记忆，标题栏按钮随主题自适应。
 
-## 下载
+## ⚡ 为什么手感跟得上滚轮
+
+```text
+之前：  read(140ms) → set(170ms) → read(140ms) → 防抖 200ms → 轮询 120ms   ≈ 770ms
+现在：  set(170ms) → 防抖 80ms → 轮询 60ms                                  ≈ 310ms
+```
+
+- 缓存档位上限，调节只发一条 `set-volume`（换设备自动作废缓存）
+- 排队的音量命令只保留最新目标，不会越调越落后
+- 滚轮 / 拖动后 0.35 秒内忽略回读，数字不会被旧读数拽回
+
+## ⬇️ 下载
+
+<p align="center">
+  <a href="https://github.com/GUY-ATM/Music-adb/releases/latest"><img src="https://img.shields.io/badge/⬇️%20下载-PhoneMusicController.exe-7c5cff?style=for-the-badge" alt="下载"></a>
+</p>
 
 从 [Releases](https://github.com/GUY-ATM/Music-adb/releases/latest) 下载 `PhoneMusicController.exe`，双击即可运行，不需要安装 Python。
 
-> Windows 首次运行时如遇 SmartScreen 提示，选择「更多信息 → 仍要运行」。
+> 🛡️ Windows 首次运行时如遇 SmartScreen 提示，选择「更多信息 → 仍要运行」。
 
-## 使用
+## 🎮 快速开始
 
-1. 手机开启「开发者选项 → USB 调试」，用数据线连接电脑（首次连接在手机上确认授权）。
-2. 打开程序，点击「连接」，状态圆点变绿即表示就绪。
-3. 想改键就点「设置上一曲 / 设置下一曲」，按下目标按键；不改则默认使用鼠标后退键 / 前进键。
-4. 到「音量」页拖动滑杆或滚动滚轮调节音量。
-5. 想随时调音量，可以把通知区域里的托盘图标拖到任务栏上固定（在「^」浮层里就按住拖出来），之后鼠标停在图标上滚动滚轮即可调节。
+| | 步骤 | 说明 |
+| :---: | --- | --- |
+| 1️⃣ | 打开 USB 调试 | 手机「开发者选项 → USB 调试」，数据线连电脑，首次在手机上确认授权 |
+| 2️⃣ | 连接 | 打开程序点「连接」，状态圆点变绿即就绪 |
+| 3️⃣ | 改键（可选） | 点「设置上一曲 / 设置下一曲」按下目标按键；不改则默认鼠标后退键 / 前进键 |
+| 4️⃣ | 调音量 | 「音量」页拖动滑杆，或把鼠标放在滑杆上滚轮调节 |
+| 5️⃣ | 常驻托盘 | 把托盘图标从「^」浮层拖到任务栏固定，之后鼠标停在图标上滚轮即可调节 🎧 |
 
-WiFi 连接：先在手机执行 `adb tcpip 5555`，断开数据线后在「设备地址」填 `192.168.x.x:5555` 再连接。
+> 💡 右键托盘图标：「显示主界面 / 重新读取音量 / 静音 / 退出」。
 
-## 从源码运行
+📶 **WiFi 连接**：先在手机执行 `adb tcpip 5555`，断开数据线后在「设备地址」填 `192.168.x.x:5555` 再连接。
+
+## 🛠️ 从源码运行
 
 需要 Python 3.9 及以上（开发与打包环境为 3.13），以及 PyQt5、PyQt-Fluent-Widgets；adb 可用 Android SDK 自带的，也可在设置页指定路径。
 
@@ -74,7 +107,7 @@ python phone_music_controller.py
 
 运行后主窗口出现，先去「连接设备」页连接手机。
 
-## 配置项
+## ⚙️ 配置项
 
 配置保存在程序同目录的 `config.json`，可由界面写入，也可手动编辑（下次启动生效）：
 
@@ -89,19 +122,19 @@ python phone_music_controller.py
 | `topmost` | `true` | 窗口置顶 |
 | `theme` | `auto` | 界面主题：`auto` / `light` / `dark` |
 
-## 工作原理
+## 🧠 工作原理
 
 | 功能 | 实现 |
-| --- | --- |
-| 切歌 | `adb shell cmd media_session dispatch next` / `previous` / `play-pause` / `stop` |
-| 音量 | `adb shell cmd audio set-volume 3 <档位>` 精确写入，档位上限取自缓存、单条命令完成调节（旧系统退回 `adj-volume`）；`MUTE` / `UNMUTE` 静音 |
-| 按键捕获 | Win32 低级钩子 `WH_MOUSE_LL` / `WH_KEYBOARD_LL`，钩子与消息循环同线程 |
-| 免闪窗 | 所有 adb 调用使用 `CREATE_NO_WINDOW` |
+| :---: | --- |
+| ⏭️ 切歌 | `adb shell cmd media_session dispatch next` / `previous` / `play-pause` / `stop` |
+| 🔊 音量 | `adb shell cmd audio set-volume 3 <档位>` 精确写入，档位上限取自缓存、单条命令完成调节（旧系统退回 `adj-volume`）；`MUTE` / `UNMUTE` 静音 |
+| 🖱️ 按键捕获 | Win32 低级钩子 `WH_MOUSE_LL` / `WH_KEYBOARD_LL`，钩子与消息循环同线程 |
+| 🪟 免闪窗 | 所有 adb 调用使用 `CREATE_NO_WINDOW` |
 
-部分系统（如 HyperOS）会拒绝 `input keyevent` 并抛出 `INJECT_EVENTS permission`，因此这里统一走 `media_session` 与 `audio` 命令通道。
+> 📌 部分系统（如 HyperOS）会拒绝 `input keyevent` 并抛出 `INJECT_EVENTS permission`，因此这里统一走 `media_session` 与 `audio` 命令通道。
 
 <details>
-<summary>项目结构</summary>
+<summary>📁 项目结构</summary>
 
 ```text
 Music-adb/
@@ -113,7 +146,7 @@ Music-adb/
 │   ├── bus.py                 # 线程间队列与连接状态
 │   ├── worker.py              # adb 串行执行线程
 │   ├── input_hooks.py         # 鼠标 / 键盘低级钩子、媒体键、按键录制与托盘滚轮
-│   ├── tray.py                # 托盘图标、右键菜单与图标屏幕位置
+│   ├── tray.py                # 图标、右键菜单与图标屏幕位置
 │   └── ui/                    # 主窗口与五个页面
 ├── tests/test_core.py         # 核心逻辑单元测试
 ├── legacy/                    # 迁移前的 Tkinter 版本备份
@@ -122,20 +155,20 @@ Music-adb/
 
 </details>
 
-## 已知限制
+## ⚠️ 已知限制
 
-- 录制的键盘按键会被程序独占，不再输入到其它窗口，建议使用 `F1`~`F12` 或 `Ctrl` / `Alt` 组合键。
-- 「拦截已绑定的鼠标按键」与「拦截媒体键」默认关闭；开启后会独占这些按键，其它软件将收不到。
-- 音量下发依赖手机系统支持 `cmd audio set-volume` / `adj-volume`，个别定制系统可能需要手动调一次音量让系统接受该通道。
-- 托盘图标默认会被 Windows 收进「^」浮层，需要在浮层里把它拖到任务栏上固定后才能滚轮调音量；程序检测到图标被折叠时会在日志页给出提示。
+- ⌨️ 录制的键盘按键会被程序独占，不再输入到其它窗口，建议使用 `F1`~`F12` 或 `Ctrl` / `Alt` 组合键。
+- 🚫 「拦截已绑定的鼠标按键」与「拦截媒体键」默认关闭；开启后会独占这些按键，其它软件将收不到。
+- 📱 音量下发依赖手机系统支持 `cmd audio set-volume` / `adj-volume`，个别定制系统可能需要手动调一次音量让系统接受该通道。
+- 📌 托盘图标默认会被 Windows 收进「^」浮层，需要在浮层里把它拖到任务栏上固定后才能滚轮调音量；程序检测到图标被折叠时会在日志页给出提示。
 
-## 开发
+## 🧪 开发
 
 ```sh
 python tests/test_core.py
 ```
 
-21 项单元测试覆盖配置校正与往返、键盘绑定解析与显示、音量解析与百分比换算、绝对档位精确设置、adb 命令通道与鼠标消息解析。
+✅ 21 项单元测试覆盖配置校正与往返、键盘绑定解析与显示、音量解析与百分比换算、绝对档位精确设置、adb 命令通道与鼠标消息解析。
 
 打包 Windows 单文件 EXE：
 
@@ -143,10 +176,12 @@ python tests/test_core.py
 pyinstaller PhoneMusicController.spec --distpath dist --workpath build --noconfirm
 ```
 
-## 贡献
+## 🤝 贡献
 
-欢迎提交 Issue 与 Pull Request。改动前请先跑一遍上面的单元测试；涉及 adb 命令的改动请附上目标机型的实测结果。
+欢迎提交 Issue 与 Pull Request 🙌 改动前请先跑一遍上面的单元测试；涉及 adb 命令的改动请附上目标机型的实测结果。
 
-## License
+## 📄 License
 
 [MIT](LICENSE)
+
+<p align="center"><em>🎶 Make it once, then never touch the phone again.</em></p>
