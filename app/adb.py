@@ -9,6 +9,9 @@ from .config import cfg
 
 VOLUME_STREAM = "3"  # STREAM_MUSIC
 
+# 最后一次读到的音量，避免每次调节都先跑一趟 adb 读档位（WiFi 连接下这趟往返很贵）
+_VOL_CACHE = {"cur": None, "max": None}
+
 # 控制通道说明（针对 HyperOS/MIUI 实测）：
 # - `input keyevent` 因缺 INJECT_EVENTS 权限被禁止；
 # - `media` 命令被移除；
@@ -63,6 +66,7 @@ def device_args():
 
 def connect_device(addr):
     """如果设备地址形如 ip:port，先执行 adb connect。"""
+    _VOL_CACHE.update({"cur": None, "max": None})  # 换了设备，档位缓存作废
     addr = (addr or "").strip()
     if ":" in addr:
         ok, out = run_adb(["connect", addr], timeout=12)
@@ -94,7 +98,9 @@ def read_volume():
     m = re.search(r"volume is (\d+) in range \[(\d+)\.\.(\d+)\]", out or "")
     if not m:
         return None, out
-    return (int(m.group(1)), int(m.group(3))), out
+    cur, mx = int(m.group(1)), int(m.group(3))
+    _VOL_CACHE.update({"cur": cur, "max": mx})
+    return (cur, mx), out
 
 
 def volume_percent(cur, mx):
@@ -135,21 +141,22 @@ def set_volume_absolute(target):
     """把音乐流音量精确设为 target（0~max），返回 (是否成功, 输出)。
 
     `cmd audio set-volume` 直接写入档位、不弹系统音量条，可以精确到 1 个档位
-    （150 档的音量范围即约 0.67% 一档）。个别老系统没有该子命令，退回
-    adj-volume 逐档逼近（那时的档位通常一次跳 10）。
+    （150 档的音量范围即约 0.67% 一档）。档位上限取自缓存，成功即认为生效，
+    不再逐次回读——滚轮连续调节时，一趟 adb 往返的延迟都会直接变成手感上的滞后。
+    个别老系统没有该子命令（返回非 0），退回 adj-volume 逐档逼近。
     """
-    v, out = read_volume()
-    if v is not None:
-        cur, mx = v
-        target = max(0, min(int(target), mx))
-        if target == cur:
-            return True, f"音量 {cur}/{mx}"
-        ok, _ = run_adb(device_args() + ["shell", "cmd", "audio", "set-volume",
-                                         VOLUME_STREAM, str(target)])
-        if ok:
-            v2, _ = read_volume()
-            if v2 is not None and v2[0] == target:
-                return True, f"音量 {v2[0]}/{v2[1]}"
+    mx = _VOL_CACHE["max"]
+    if mx is None:
+        v, out = read_volume()
+        if v is None:
+            return False, out
+        mx = v[1]
+    target = max(0, min(int(target), mx))
+    ok, detail = run_adb(device_args() + ["shell", "cmd", "audio", "set-volume",
+                                          VOLUME_STREAM, str(target)])
+    if ok:
+        _VOL_CACHE["cur"] = target
+        return True, f"音量 {target}/{mx}"
     return _adj_volume_to(target)
 
 

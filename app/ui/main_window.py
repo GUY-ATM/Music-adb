@@ -68,8 +68,9 @@ class MainWindow(FluentWindow):
                  f"键盘={'正常' if input_hooks.keyboard_hook_ok else '失败'}")
 
         self.timer = QTimer(self)
-        self.timer.setInterval(120)
+        self.timer.setInterval(60)
         self.timer.timeout.connect(self.poll)
+        self._tick = 0
         self.timer.start()
 
     # ------------------------------------------------------------------
@@ -244,12 +245,14 @@ class MainWindow(FluentWindow):
                 break
             self.volumePage.on_wheel(step)
         # 托盘图标可能随任务栏位置变化，定期刷新给钩子用的命中矩形
-        input_hooks.set_tray_rect(self.tray.geometry_physical())
-        if self.tray.hidden_in_overflow != self._tray_hidden:
-            self._tray_hidden = self.tray.hidden_in_overflow
-            if self._tray_hidden:
-                self.log("托盘图标目前折叠在任务栏的「^」浮层里：把它从浮层拖到任务栏上固定，"
-                         "之后就能把鼠标移到图标上滚动滚轮调节音量。")
+        self._tick += 1
+        if self._tick % 5 == 0:  # 约 300ms 一次即可，没必要每帧都查窗口
+            input_hooks.set_tray_rect(self.tray.geometry_physical())
+            if self.tray.hidden_in_overflow != self._tray_hidden:
+                self._tray_hidden = self.tray.hidden_in_overflow
+                if self._tray_hidden:
+                    self.log("托盘图标目前折叠在任务栏的「^」浮层里：把它从浮层拖到任务栏上固定，"
+                             "之后就能把鼠标移到图标上滚动滚轮调节音量。")
 
     def handle_result(self, label, ok, msg):
         if label == "检测设备":

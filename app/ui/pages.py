@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """应用页面：连接、播放、音量、日志、设置。仅负责界面表现，业务通过控制器调用。"""
 
+import time
+
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFileDialog, QHBoxLayout, QVBoxLayout, QWidget
@@ -212,9 +214,10 @@ class VolumePage(BasePage):
         self.ctl = ctl
         self._syncing = False
         self._pending = None
+        self._last_input = 0.0  # 上一次拖动/滚轮的时间，用于避免旧读数把数值拽回去
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
-        self._timer.setInterval(200)
+        self._timer.setInterval(80)
         self._timer.timeout.connect(self._flush)
         self.muted = False
 
@@ -264,6 +267,7 @@ class VolumePage(BasePage):
         if self._syncing:
             return
         self._pending = int(value)
+        self._last_input = time.time()
         self.valueLabel.setText(f"{self._pending}%")
         if not self._timer.isActive():
             self._timer.start()
@@ -282,6 +286,9 @@ class VolumePage(BasePage):
 
     def sync(self, cur, mx):
         self._mx = int(mx)
+        # 用户还在滚轮 / 拖滑杆时，稍早那次下发的回读值会把数值拽回去，这里直接忽略
+        if time.time() - self._last_input < 0.35:
+            return
         pct = volume_percent(cur, mx)
         self._syncing = True
         try:

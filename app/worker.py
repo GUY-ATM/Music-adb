@@ -9,8 +9,10 @@ from .config import cfg, save_config
 
 
 def worker_loop():
+    pending = None  # 被本轮挤出来、留到下一轮处理的命令
     while True:
-        item = cmd_q.get()
+        item = pending if pending is not None else cmd_q.get()
+        pending = None
         if item is None:
             break
         kind = item[0]
@@ -29,6 +31,17 @@ def worker_loop():
                 result_q.put(("音量同步", True, f"{v[0]},{v[1]}"))
         elif kind == "volume_set":
             _, target = item
+            # 连续滚轮会排下一串音量命令，只保留最新的目标值，避免越调越落后
+            while True:
+                try:
+                    nxt = cmd_q.get_nowait()
+                except Exception:
+                    break
+                if nxt[0] == "volume_set":
+                    target = nxt[1]
+                else:
+                    pending = nxt
+                    break
             if not CONNECTED["ok"]:
                 result_q.put(("音量", False, "未连接设备，请先点击「连接」"))
                 continue
